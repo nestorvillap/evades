@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block content %}
+	<style type="text/css">		
+		body{
+			    background:#222;
+			}
+	
+		.Menu{
+			margin-top: 5%;
+		}
+
+
+		.Grande1{
+			padding: 35px;
+			margin-bottom: 1%;
+			font-size: 20px;
+
+		}
+
+		.Grande2{
+			padding: 35px;
+			margin-bottom: 1%;
+			margin-left: 0.5%;
+			font-size: 20px;
+
+		}
+
+		.imagen_logo{
+			width: 350px;
+			margin-bottom: 2%;
+			}
+
+		.back{
+			margin-top: 3%;
+		}
+
+		.titulo{
+			margin-bottom: 2%;
+		}
+
+		h1{
+			color: #ffff;
+		}
+
+		h5{
+			color: #ffff;
+
+		}
+
+
+	</style>
+	<center>
+	<div class="Menu">
+		<img class="imagen_logo" src="{{ url_for('static', filename='images/logo.png') }}">
+
+
+		<div clas="Grande1">
+		<h1 class="titulo">In progress</h1>
+		<h5>We are very near to get the online mode,<br>
+		 it will be a little different than the offline mode. <br>
+		 But we think that this mode will become in the best one.</h5>
+
+		</div>
+
+		<button onclick="window.location.href='/'" type="button" class="btn btn-primary normal back">Go back</button>
+
+	</div>
+	</center>
+	{% endblock %}

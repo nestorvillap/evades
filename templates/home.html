@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block content %}
+	<style type="text/css">		
+		body{
+				margin: 20px;
+			    background:#222;
+			}
+
+		.Menu{
+			margin-top: 5%;
+		}
+
+
+		.Grande1{
+			padding: 35px;
+			margin-bottom: 1%;
+			font-size: 20px;
+
+		}
+
+		.Grande2{
+			padding: 35px;
+			margin-bottom: 1%;
+			margin-left: 0.5%;
+			font-size: 20px;
+
+		}
+
+		.imagen_logo{
+			width: 350px;
+			margin-bottom: 2%;
+			}
+
+		.chat{
+			position: absolute;
+			width: 300px;
+			height: 165px;
+		}
+
+		.window ul{
+			color: #fff;
+
+		}
+
+		 .window{ 
+		 		position: absolute;
+		 		width: 300px;
+				height: 165px;
+			    padding: 2px 2px 10px;
+			    background-color: rgba(0,0,0,.5);
+			    overflow: auto;
+			    max-height: 600px;
+			}
+
+		.message-box{
+			margin-top: 55%
+		}
+
+		.message-box-text{
+			width: 74%;
+			border: 0px;
+		}
+
+		.message-box-send{
+			width: 24%;
+			border: 0px;
+
+		}
+
+
+	</style>
+
+	<center>
+
+	<div class="Menu">
+		<img class="imagen_logo" src="{{ url_for('static', filename='images/logo.png') }}">
+
+
+		<div clas="Grande1"><button onclick="window.location.href='/ss'" type="button" class="btn btn-primary Grande1">Offline</button>
+
+		<button onclick="window.location.href='/online'" type="button" class="btn btn-primary Grande2">Online</button></div>
+
+		<button onclick="window.location.href='/how-to-play'" type="button" class="btn btn-primary">How to play?</button>
+
+	</div>
+	</center>
+	<!-- CHAT -->
+	<div class="chat">
+
+		<div class="window">
+			<ul id="messages"></ul>
+		</div>
+
+		<div class="message-box">
+		<input class="message-box-text" placeholder="Press enter to chat" type="text" id="myMessage">
+		<button class="message-box-send" id="sendbutton">Send</button>
+		</div>
+
+	</div>
+
+	{% endblock %}

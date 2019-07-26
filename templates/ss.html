@@ -1,0 +1,529 @@
+<canvas id="ctx"></canvas>
+<style type="text/css">
+	canvas {
+		position: absolute;
+		top: 0px;
+		left: 0px;
+	}
+</style>
+<script>
+	var canvas = document.getElementById("ctx");
+	var context = canvas.getContext("2d"),
+		width = window.innerWidth,
+		height = window.innerHeight,
+		ratio = window.devicePixelRatio;
+	canvas.width = width * ratio;
+	canvas.height = height * ratio;
+	canvas.style.width = width + "px";
+	canvas.style.height = height + "px";
+	context.scale(ratio, ratio);
+	var timeWhenGameStarted = Date.now();
+	var frameCount = 0;
+	var score = 0;
+	var img = new Image();
+    img.src = "https://evades.io/tiles.5e12c370.jpg";
+    var playerUpgradeSpeed = 5;
+    var frameBulletCount = 0;
+    var requestForLevel = 4;
+    var cooldown = true;
+  window.onresize = function() {
+	  var winw = window.innerWidth;
+	  var winh = window.innerHeight;
+	  var xvalue = winw / width;
+	  var yvalue = winh / height;
+	  scale = xvalue;
+	  if (yvalue < xvalue) {
+	    scale = yvalue
+	  }
+	  canvas.style.transform = "scale(" + scale + ")";
+	  canvas.style.left = (winw - width) / 2 + "px";
+	  canvas.style.top = (winh - height) / 2 + "px";
+	};
+	window.onload = function() {
+	  var winw = window.innerWidth;
+	  var winh = window.innerHeight;
+	  var xvalue = winw / width;
+	  var yvalue = winh / height;
+	  scale = xvalue;
+	  if (yvalue < xvalue) {
+	    scale = yvalue
+	  }
+	  canvas.style.transform = "scale(" + scale + ")";
+	  canvas.style.left = (winw - width) / 2 + "px";
+	  canvas.style.top = (winh - height) / 2 + "px";
+	}
+
+	var player = {
+		color: "rgb(0, 0, 255)",
+	    x: width/2,
+	    speed: playerUpgradeSpeed,
+	    y: height/2,
+        hp: 100,
+        radius: 14,
+        shift: playerUpgradeSpeed/2,
+        collectedPellets: 0,
+        reload: 1,
+        level: 1,
+        maxBullets: 1,
+        skillPoints: 2,
+	};
+
+    var enemyList = {};
+    var upgradeList = {};
+    var playerBulletList = {};
+    var enemyBulletList = {};
+    var friction = 0.15;
+
+    keydown = function(w) {
+        keys[w.keyCode] = true;
+    }
+
+    keyup = function(w) {
+        delete keys[w.keyCode];
+    }
+
+    var keys = [];
+    document.addEventListener("keydown", keydown, false);
+    document.addEventListener("keyup", keyup, false);
+
+
+    enemy = function (id,x,y,spdX,spdY,radius,color,types,angle,speed) {
+        var enemy = {
+        	color:color,
+            x:x,
+	        y:y,
+            angle,
+	        spdX:spdX,
+	        spdY:spdY,
+            id:id,
+            radius:radius,
+            speed:speed,
+            types:types,
+        }
+        enemyList[id] = enemy;
+    }
+    upgrade = function (id,x,y,spdX,spdY,radius,color) {
+        var upgrade = {
+        	color:color,
+            x:x,
+	        y:y,
+	        spdX:spdX,
+	        spdY:spdY,
+            id:id,
+            radius:radius,
+        }
+        upgradeList[id] = upgrade;
+    }
+    playerBullet = function (id,x,y,spdX,spdY,radius,color,angle,speed) {
+        var playerBullet = {
+        	color:color,
+            x:x,
+	        y:y,
+	        spdX:spdX,
+	        spdY:spdY,
+            id:id,
+            radius:radius,
+            timer:0,
+            angle:angle,
+            speed:speed,
+            destroyAfterWall:true,
+        }
+        playerBulletList[id] = playerBullet;
+    }
+    enemyBullet = function (id,x,y,spdX,spdY,radius,color,angle,speed) {
+        var enemyBullet = {
+            color:color,
+            x:x,
+            y:y,
+            spdX:spdX,
+            spdY:spdY,
+            id:id,
+            radius:radius,
+            timer:0,
+            angle:angle,
+            speed:speed,
+            destroyAfterWall:true
+        }
+        enemyBulletList[id] = enemyBullet;
+    }
+
+    spawnRandomEnemy = function() {
+    	var x = Math.random() * width;
+    	var y = Math.random() * height;
+    	var radius = 18;
+        var angle = ((Math.random()*360)/180) * Math.PI;
+    	var id = Math.random();
+        var random = Math.random();
+        if (random< 0.3) {
+        var types = "Homing";
+        var color = "rgb(150,110,20)";
+		var speed = 7;
+        }
+        else if (random>0.9) {
+        var types = "Sniper";
+        var color = "#a05353"
+		var speed = 6;
+        }
+        else {
+        var types = "Normal"
+        var color = "rgb(150,150,150)";
+		var speed = 8;
+        }
+        var spdX = Math.cos(angle)*speed;
+        var spdY = Math.sin(angle)*speed;
+
+    	enemy(id,x,y,spdX,spdY,radius,color,types,angle,speed)
+    }
+    spawnRandomUpgrade = function() {
+    	var x = Math.random() * width;
+    	var y = Math.random() * height;
+    	var radius = 8;
+    	var spdX = 0;
+    	var spdY = 0;
+    	var id = Math.random();
+        var p =  ["#b84dd4", "#a32dd8", "#3b96fd", "#43c59b", "#f98f6b"];
+        var color = p[Math.floor(Math.random()*p.length)];
+
+    	upgrade(id,x,y,spdX,spdY,radius,color)
+    }
+    spawnRandomPlayerBullet = function() {
+    	var x = player.x;
+    	var y = player.y;
+        var speed = 23;
+    	var radius = 5;
+    	var angle = ((Math.random()*360)/180) * Math.PI;
+    	var spdX = Math.cos(angle)*speed;
+    	var spdY = Math.sin(angle)*speed;
+    	var id = Math.random();
+    	var color = "rgb(0, 0, 0)"
+
+        playerBullet(id,x,y,spdX,spdY,radius,color,angle,speed)
+    }
+
+    spawnRandomEnemyBullet = function(S) {
+        var x = S.x;
+        var y = S.y;
+        var speed = 11;
+        var radius = S.radius/2;
+        var difX  = player.x - x;
+        var difY = player.y - y;
+        var angle = Math.atan2(difY,difX);
+        var spdX = Math.cos(angle)*speed;
+        var spdY = Math.sin(angle)*speed;
+        var id = Math.random();
+        var color = "#a05353";
+
+        enemyBullet(id,x,y,spdX,spdY,radius,color,angle,speed)
+    }
+    startNewGame = function() {
+        player.level = 1;
+        player.skillPoints = 0;
+        player.collectedPellets = 0;
+        requestForLevel = 4;
+        player.speed = playerUpgradeSpeed;
+        player.reload = 1;
+        player.maxBullets = 1;
+    	player.hp = 100;
+    	timeWhenGameStarted = Date.now();
+    	frameCount = 0;
+    	enemyList = {};
+    	upgradeList = {};
+    	playerBulletList = {};
+        enemyBulletList = {};
+    	spawnRandomEnemy();
+    	spawnRandomEnemy();
+    	spawnRandomEnemy();
+    	score = 0;
+    	spawnRandomUpgrade();
+    }
+
+    startNewGame();
+
+    drawMap = function() {
+    	    var size = 28;
+            for (var i = 0; i < width/size; i++) {
+            for (var j = 0; j < height/size; j++) {
+            context.drawImage(img, (i%4)*32, (j%4)*32, 32, 32,i*size, j*size, size, size);
+            }
+            }
+    }
+
+
+    getDistanceBetweenEntity = function (entity1,entity2) {
+    	var vx = entity1.x - entity2.x
+    	var vy = entity1.y - entity2.y
+    	return Math.sqrt(vx*vx+vy*vy);
+    }
+
+    testCollisionEntity = function (entity1,entity2) {
+    	var distance = getDistanceBetweenEntity(entity1,entity2);
+    	return distance < (entity1.radius + entity2.radius);
+
+    }
+
+	closestPointToRectangle = function(pos, rectpos, rectsize) {
+		var xpos = pos.x;
+		var ypos = pos.y;
+		if (xpos < rectpos.x) {
+			xpos = rectpos.x
+		}
+		if (xpos > rectpos.x + rectsize.x) {
+			xpos = rectpos.x + rectsize.x;
+		}
+		if (ypos < rectpos.y) {
+			ypos = rectpos.y
+		}
+		if (ypos > rectpos.y + rectsize.y) {
+			ypos = rectpos.y + rectsize.y;
+		}
+		return {x:xpos, y:ypos};
+	}
+
+    homingEnemyAim = function(player,homingEnemy) {
+        var enternInRange = getDistanceBetweenEntity(player,homingEnemy);
+            if (enternInRange <= 192) {
+            var vx = player.x - homingEnemy.x;
+            var vy = player.y - homingEnemy.y;
+            var homingAimDirection = Math.atan2(vy,vx);
+            var distanceDifference = homingAimDirection - homingEnemy.angle;
+            var angleDifference = Math.atan2(Math.sin(distanceDifference), Math.cos(distanceDifference));
+            var angleIncrement = 0.05;
+            if (Math.abs(angleDifference) >= angleIncrement) {
+                if (angleDifference < 0) {
+                    homingEnemy.angle -= angleIncrement;
+                }
+                else {
+                    homingEnemy.angle += angleIncrement;
+                }
+                }
+            }
+            homingEnemy.spdX = Math.cos(homingEnemy.angle)*homingEnemy.speed;
+            homingEnemy.spdY = Math.sin(homingEnemy.angle)*homingEnemy.speed;
+    }
+	gameOnEnemyPosition = function(s) {
+        if (s != player) {
+            s.x += s.spdX;
+		    s.y += s.spdY;
+		        if (s.x >= width - s.radius || s.x <= s.radius) {
+			         s.spdX = -s.spdX;
+                        if (s.angle) {
+                            s.angle = Math.PI - s.angle;
+                        }
+		        }
+		        if (s.y >= height - s.radius || s.y <= s.radius) {
+				    s.spdY = -s.spdY;
+                        if (s.angle) {
+                            s.angle = Math.PI*2 - s.angle;
+                        }
+                }
+		    var fixed = closestPointToRectangle({x:s.x,y:s.y},{x:s.radius,y:s.radius},{x:width-s.radius*2,y:height-s.radius*2})
+		    s.x = fixed.x;
+		    s.y = fixed.y;
+        }
+        else {
+            var fixed = closestPointToRectangle({x:s.x,y:s.y},{x:s.radius,y:s.radius},{x:width-s.radius*2,y:height-s.radius*2})
+            s.x = fixed.x;
+            s.y = fixed.y;
+        }
+	}
+
+
+    gameOnEntityDrawing = function(s) {
+    	context.save();
+        context.beginPath();
+		context.fillStyle = s.color;
+		context.arc(s.x, s.y,s.radius, 0, Math.PI * 2, true);
+		context.fill();
+		context.closePath();
+		context.restore();
+    }
+
+    gameOnEnemy = function (s) {
+    	gameOnEnemyPosition(s);
+    	gameOnEntityDrawing(s);
+    }
+
+    gameOn = function() {
+        context.clearRect(0, 0, width, height);
+        context.textAlign = "center";
+        drawMap();
+        frameCount++
+        score++
+        if (cooldown == false) {
+            frameBulletCount ++;
+            if (frameBulletCount >= Math.round(132/player.reload)) {
+                cooldown = true;
+                frameBulletCount = 0;
+            }
+        }
+        if (keys[49]){
+            if(frameCount % 4 == 0) {
+                if (player.skillPoints > 0) {
+                    player.speed += 1.5;
+                    player.skillPoints -= 1;
+                }
+            }
+        }
+        if (keys[50]){
+            if(frameCount % 4 == 0) {
+                if (player.skillPoints > 0) {
+                    player.maxBullets += 1;
+                    player.skillPoints -= 1;
+                }
+            }
+        }
+        if (keys[51]){
+            if(frameCount % 4 == 0) {
+                if (player.skillPoints > 0) {
+                    player.reload += + 0.2;
+                    player.skillPoints -= 1;
+                }
+            }
+        }
+        if (keys[52]){
+            if(frameCount % 4 == 0) {
+                if (player.skillPoints > 0 && player.hp <= 80) {
+                    player.hp += + 20;
+                    player.skillPoints -= 1;
+                }
+            }
+        }
+        var currentSpeed = player.speed;
+        if (keys[16]) {
+            player.shift = true;
+        } else {
+            player.shift = false;
+        }
+        if (player.shift) {
+            currentSpeed/=2
+        }
+        if (keys[87] || keys[38]) {
+            player.y -= currentSpeed;
+        }
+        if (keys[65] || keys[37]) {
+            player.x -= currentSpeed;
+        }
+        if (keys[68] || keys[39]) {
+            player.x += currentSpeed;
+        }
+        if (keys[83] || keys[40]) {
+            player.y += currentSpeed;
+        }
+        if (keys[74] || keys[90]) {
+            if (cooldown) {
+                cooldown = false;
+                for (var i = 0; i < player.maxBullets; i++) {
+                    spawnRandomPlayerBullet();
+                }
+            }
+        }
+        if (frameCount % 100 == 0) {
+            spawnRandomEnemy();
+        }
+        if (frameCount % 25 == 0) {
+            spawnRandomUpgrade();
+        }
+
+        gameOnEnemy(player);
+        for (var key in upgradeList) {
+            gameOnEnemy(upgradeList[key]);
+            var isCollectingUgrade = testCollisionEntity(player, upgradeList[key]);
+            if (isCollectingUgrade) {
+                score = score + 1000;
+                delete upgradeList[key];
+                player.collectedPellets++;
+                if (player.collectedPellets >= requestForLevel) {
+                    requestForLevel = requestForLevel + 2;
+                    player.collectedPellets = 0;
+                    player.level++;
+                    player.skillPoints++;
+                    score= score + 20000;
+                }
+            }
+        }
+
+        for (var key in enemyList) {
+            if (enemyList[key].types === "Homing")
+                homingEnemyAim(player, enemyList[key]);
+            if (enemyList[key].types === "Sniper") {
+                if (frameCount % 132 == 0) {
+                spawnRandomEnemyBullet(enemyList[key]);
+                }
+            //if (enemyList[key].types === "Zoning") {
+                //}
+            }
+            gameOnEnemy(enemyList[key]);
+            if (frameCount > 1500) {
+                enemyList[key].speed = 11;
+            }
+            if (frameCount > 3000) {
+                enemyList[key].radius = 27;
+            }
+            if (frameCount > 4500) {
+                enemyList[key].speed = 15;
+            }
+            if (frameCount > 6000) {
+                enemyList[key].radius = 34;
+            }
+            var isCollidingWithEnemy = testCollisionEntity(player, enemyList[key]);
+            if (isCollidingWithEnemy) {
+                player.hp = player.hp - 1;
+            }
+        }
+        for (var key in playerBulletList) {
+            gameOnEnemy(playerBulletList[key]);
+            playerBulletList[key].timer++;
+            if (playerBulletList[key].timer > 33) {
+                delete playerBulletList[key];
+                continue;
+            }
+            for (var key2 in enemyList) {
+                var isKillingEnemy = testCollisionEntity(enemyList[key2], playerBulletList[key]);
+                if (isKillingEnemy) {
+                    enemyList[key2].angle = playerBulletList[key].angle;
+                    enemyList[key2].spdY = Math.sin(enemyList[key2].angle)*enemyList[key2].speed;
+                    enemyList[key2].spdX = Math.cos(enemyList[key2].angle)*enemyList[key2].speed;
+                    break;
+                }
+            }
+        }
+        for (var key in enemyBulletList) {
+            gameOnEnemy(enemyBulletList[key]);
+            enemyBulletList[key].timer++;
+            if (enemyBulletList[key].timer > 99) {
+                delete enemyBulletList[key];
+                continue;
+            }
+            var isKillingPlayer = testCollisionEntity(player, enemyBulletList[key]);
+                if (isKillingPlayer) {
+                    player.hp = player.hp - 1;
+                }
+        }
+
+        context.fillStyle = "rgb(0,0,0)";
+        context.font = "30px AR DESTINE"
+        context.fillText(player.hp + "hp", (width / 2) + 100, 30);
+        context.fillStyle = "rgb(255,0,0)";
+        context.fillRect((width / 2) - 50, 30, 100, -20);
+        context.fillRect(player.x - 20, player.y - 20, 40, -8);
+        context.fillStyle = "rgb(0,255,112)";
+        context.fillRect((width / 2) - 50, 30, player.hp, -20);
+        context.fillRect(player.x - 20, player.y - 20, player.hp * 40 / 100, -8);
+        context.fillStyle = "rgb(0,0,0)";
+        context.fillText("Score " + score + " !", 100, 30);
+        context.fillText("LV" + player.level, (width/2)-100, 30);
+        context.fillText("Skill Points: ", width- 120, 30)
+        for (var l = 0; l < player.skillPoints; l++) {
+            context.fillStyle = "rgb(0,200,0)"
+            context.fillRect(width-30, 5+l*32, 28, 28);
+        }
+
+        if (player.hp <= 0) {
+            var timeSurvived = Date.now() - timeWhenGameStarted;
+            console.log("you survived for " + (timeSurvived / 1000) + "seconds" + " and got " + score + " Score !");
+            startNewGame();
+        }
+    }
+
+    setInterval(gameOn,33);
+</script>

@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+
+{% block content %}
+	<style type="text/css">		
+		body{
+			    background:#222;
+			}
+	
+		.Menu{
+			margin-top: 5%;
+		}
+
+
+		.Grande1{
+			padding: 35px;
+			margin-bottom: 1%;
+			font-size: 20px;
+
+		}
+
+		.Grande2{
+			padding: 35px;
+			margin-bottom: 1%;
+			margin-left: 0.5%;
+			font-size: 20px;
+
+		}
+
+		.imagen_logo{
+			width: 350px;
+			margin-bottom: 2%;
+			}
+
+		.back{
+			margin-top: 3%;
+		}
+
+		.titulo{
+			margin-bottom: 2%;
+		}
+
+		h1{
+			color: #ffff;
+		}
+
+		h5{
+			color: #ffff;
+
+		}
+
+
+	</style>
+	<center>
+
+
+	<div class="Menu">
+		<img class="imagen_logo" src="{{ url_for('static', filename='images/logo.png') }}">
+
+
+		<div clas="Grande1">
+		<h1 class="titulo">How to play?</h1>
+		<h5>WASD/Arrow Keys to move.<br>
+		 J/Z to shot a ball that repells enemies.<br>
+		 Collect pellets to level up and gain Skill Points.<br>
+		 1 to increase speed by 1.5<br>
+		 2 to increase max pellets by 1<br>
+	   	 3 to reduce cooldown<br>
+		 4 to heal 20 hp<br>
+	 	 Cost 1 skill point<br>
+		</h5>
+
+		</div>
+
+		<button onclick="window.location.href='/'" type="button" class="btn btn-primary normal back">Go back</button>
+
+	</div>
+	</center>
+	
+	{% endblock %}
